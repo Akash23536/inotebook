@@ -13,6 +13,7 @@ router.post('/createuser', [
   body('email', 'enter valid email').isEmail(),
   body('password', 'password must be atleast 5 charater').isLength({ min: 5 }),
 ], async (req, res) => {
+
   //if there are error,return bad requestand the error
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -29,6 +30,7 @@ router.post('/createuser', [
     // addind Hash and salt in secPassword
     const salt = await bcrypt.genSalt(10);
     const secPassword = await bcrypt.hash(req.body.password, salt)
+
     //create a new user
     user = await User.create({
       name: req.body.name,
@@ -41,7 +43,7 @@ router.post('/createuser', [
         id: user.id
       }
     }
-    const authtoken = jwt.sign(data, JWT_SECRET);
+    const authtoken = jwt.sign(data, JWT_SECRET); // sign the authtoken
     res.json({ authtoken })
 
   }
@@ -51,5 +53,44 @@ router.post('/createuser', [
     res.status(500).send("some error has occured");
   }
 })
+//-----------------------------------------------------------------------
+//authentication a user using : post "/api/auth/login"  no login required
+router.post('/login', [
+  body('email', 'enter valid email').isEmail(),
+  body('password', 'password can not be black').exists(),
+], async (req, res) => {
 
+  //if there are error,return bad requestand the error
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  //destructuring email and password / user ko le rha hu body sa
+  const { email, password } = req.body;
+  try {
+    let user = await user.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ errors: "please try to login with correct credentials" });
+    }
+    //comparing typed_password to db_password
+    const passwordCompare = await bcrypt.compare(password, user.password);
+    if (!passwordCompare) {
+      return res.status(400).json({ errors: "please try to login with correct credentials" });
+    }
+    // adding authentication token
+    const data = {
+      user: {
+        id: user.id
+      }
+    }
+    const authtoken = jwt.sign(data, JWT_SECRET); // sign the authtoken
+    res.json({ authtoken })
+
+  }
+  //catch an error 
+  catch (error) {
+    console.error(error.message)
+    res.status(500).send("some error has occured");
+  }
+})
 module.exports = router;

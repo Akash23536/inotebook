@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require('express'); // importing express 
 const User = require('../models/User'); // importing User model from Model folder
 const router = express.Router()
 const { body, validationResult } = require('express-validator');// adding express validator from doc 6.12.0 

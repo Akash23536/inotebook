@@ -1,11 +1,9 @@
-const connectToMongo = require('./db');
-const express = require('express');
+const connectToMongo = require('./db');//importing database as db
+const express = require('express');//importing express validator
 
-connectToMongo();
-
+connectToMongo();//connecting mongodb database 
+const port = 5000 
 const app = express()
-const port = 5000
-
 app.use(express.json())
 
 //available routes-endpoint

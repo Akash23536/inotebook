@@ -1,25 +1,24 @@
-const express = require('express'); // importing express 
+const express = require('express'); // importing express validator 
 const User = require('../models/User'); // importing User model from Model folder
 const router = express.Router()
 const { body, validationResult } = require('express-validator');// adding express validator from doc 6.12.0 
 const bcrypt = require('bcryptjs'); //importing bcrypt.js to getRandomValues interface to obtain secure random numbers
 const jwt = require('jsonwebtoken'); //importing JWT package
-
+const fetchuser = require('../middleware/fetchuser');//importing fetchuser middleware
 const JWT_SECRET = 'akashisagoodb$oy'; // creating signature of authtoken
 
-//create a user using post : "/api/auth/createuser"  no login required
+
+//ROUT:1  create a user using post : "/api/auth/createuser"  no login required
 router.post('/createuser', [
   body('name', 'enter a valid name').isLength({ min: 3 }),
   body('email', 'enter valid email').isEmail(),
   body('password', 'password must be atleast 5 charater').isLength({ min: 5 }),
 ], async (req, res) => {
-
   //if there are error,return bad requestand the error
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-
   try {
     // check whether user with same email exist already
     let user = await User.findOne({ email: req.body.email });
@@ -45,21 +44,20 @@ router.post('/createuser', [
     }
     const authtoken = jwt.sign(data, JWT_SECRET); // sign the authtoken
     res.json({ authtoken })
-
   }
-  // catch an error
   catch (error) {
     console.error(error.message)
     res.status(500).send("some error has occured");
   }
 })
-//-----------------------------------------------------------------------
-//authentication a user using : post "/api/auth/login"  no login required
+
+
+
+//ROUT:2 authentication a user using : post "/api/auth/login"  no login required
 router.post('/login', [
   body('email', 'enter valid email').isEmail(),
   body('password', 'password can not be black').exists(),
 ], async (req, res) => {
-
   //if there are error,return bad requestand the error
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -85,12 +83,24 @@ router.post('/login', [
     }
     const authtoken = jwt.sign(data, JWT_SECRET); // sign the authtoken
     res.json({ authtoken })
-
   }
-  //catch an error 
   catch (error) {
     console.error(error.message)
     res.status(500).send("some error has occured");
   }
 })
+
+
+//ROUT: 3   get loggin User detail  using : post "/api/auth/getuser"  login requiered
+router.post('/getuser', fetchuser, async (req, res) => {
+  try {
+    userId = req.user.id;
+    const user = await User.findById(userId).select("-password")
+    res.send(user);
+  } catch (error) {
+    console.error(error.message)
+    res.status(500).send("some error has occured");
+  }
+})
+
 module.exports = router;

@@ -52,43 +52,45 @@ router.post('/createuser', [
 })
 
 
-
 //ROUT:2 authentication a user using : post "/api/auth/login"  no login required
 router.post('/login', [
-  body('email', 'enter valid email').isEmail(),
-  body('password', 'password can not be black').exists(),
+  body('email', 'Enter a valid email').isEmail(),
+  body('password', 'Password cannot be blank').exists(),
 ], async (req, res) => {
-  //if there are error,return bad requestand the error
+
+  // If there are errors, return Bad request and the errors
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-  //destructuring email and password / user ko le rha hu body sa
-  const { email, password } = req.body;
+
+  const { email, password } = req.body; //destructuring email and password / user ko le rha hu body sa
   try {
-    let user = await user.findOne({ email });
+    let user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ errors: "please try to login with correct credentials" });
+      return res.status(400).json({ error: "Please try to login with correct credentials" });
     }
-    //comparing typed_password to db_password
+//comparing typed_password to db_password
     const passwordCompare = await bcrypt.compare(password, user.password);
     if (!passwordCompare) {
-      return res.status(400).json({ errors: "please try to login with correct credentials" });
+      return res.status(400).json({ error: "Please try to login with correct credentials" });
     }
-    // adding authentication token
+ // adding authentication token
     const data = {
       user: {
         id: user.id
       }
     }
-    const authtoken = jwt.sign(data, JWT_SECRET); // sign the authtoken
+    const authtoken = jwt.sign(data, JWT_SECRET);// sign the authtoken
     res.json({ authtoken })
+
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Internal Server Error");
   }
-  catch (error) {
-    console.error(error.message)
-    res.status(500).send("some error has occured");
-  }
-})
+
+
+});
 
 
 //ROUT: 3   get loggin User detail  using : post "/api/auth/getuser"  login requiered

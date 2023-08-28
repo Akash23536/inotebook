@@ -1,9 +1,12 @@
 const connectToMongo = require('./db');//importing database as db
 const express = require('express');//importing express validator
+var cors = require('cors')
 
 connectToMongo();//connecting mongodb database 
-const port = 5000 
 const app = express()
+const port = 5000 
+
+app.use(cors())
 app.use(express.json())
 
 //available routes-endpoint
